@@ -25,7 +25,7 @@ def readall(local, remote):
             l_dir = os.listdir(l_dir)
             l_dir.sort()
         else:
-            print("Local directory not found, check directory path!")
+            print("Local directory not found, check directory path!!")
             sys.exit()
     except OSError as e:
         print("Error, could not read local disk, reason:\n" + e)
