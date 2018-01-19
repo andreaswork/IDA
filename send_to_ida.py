@@ -2,12 +2,17 @@ import os
 import subprocess
 import sys
 import progressbar
+import logging
+import datetime
 from time import sleep
 
 
 # These are here just for testing, the app asks for path when starting it
 #local_path = "/home/andreas/Desktop/testfolder/"
 #remote_path = "/ida/xx/xx/testfolder/"
+timestamp = datetime.datetime.now().strftime("%y/%m/%d - %H:%M:%S")
+logging.basicConfig(filename='ida.log', level=logging.DEBUG)
+logging.debug('IDA: ' + timestamp)
 
 
 def readall(local, remote):
@@ -113,15 +118,16 @@ def send(missing_list, local_path, remote_path):
         for line in bar(m_list):
             sleep(0.02)
             try:
-                error_string = "USER_SOCK_CONNECT_TIMEDOUT"
+                error_string = "ERROR"
 
                 command = 'iput -rfv ' + local_path + line + ' ' + remote_path
                 output = subprocess.getoutput([command])
+                logging.info(timestamp + ': ' + output)
                 # for debugging
-                print("subprocess output: " + output + "\n")
+                #print("subprocess output: " + output + "\n")
                 if error_string in output:
                     # if error in sending, try again couple of times
-                    print("Error in sending file: " + line + ' reason: ' + error_string)
+                    print("Error in sending file: " + line + ' reason: ' + output)
                     print("Trying to resend file, retrying...")
                     # removed retry to its own function
                     retry = retry_send(command)
@@ -157,6 +163,7 @@ def retry_send(command):
         while not sent:
             attempt += 1
             output = subprocess.getoutput([command])
+            logging.info(timestamp + ': ' + 'RETRYING: ' + output)
             if error_string in output:
                 print("\nAttempt: " + str(attempt) + "/5  FAILED! Attempting again...")
                 sent = False
