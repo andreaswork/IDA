@@ -27,7 +27,7 @@ def readall(local, remote):
             print("Local directory not found, check directory path!!")
             sys.exit()
     except OSError as e:
-        print("Error, could not read local disk, reason:\n" + e)
+        print("Error, could not read local disk, reason:\n" + str(e))
     # read IDA r_dir content
     command = 'ils ' + r_dir
     try:
@@ -116,43 +116,19 @@ def send(missing_list, local_path, remote_path):
                 error_string = "USER_SOCK_CONNECT_TIMEDOUT"
 
                 command = 'iput -rfv ' + local_path + line + ' ' + remote_path
-                output1 = subprocess.getoutput([command])
-                sleep(5)
+                output = subprocess.getoutput([command])
                 # for debugging
-                # print("subprocess output: " + output1 + "\n")
-                if error_string in output1:
+                print("subprocess output: " + output + "\n")
+                if error_string in output:
                     # if error in sending, try again couple of times
                     print("Error in sending file: " + line + ' reason: ' + error_string)
-                    print("Trying to resend file...")
-                    try:
-                        # try to resend file 5 times MAX!
-                        sent = False
-                        attempt = 0
-                        sleep(1)
-                        while not sent:
-                            attempt = attempt + 1
-                            output2 = subprocess.getoutput([command])
-                            if error_string in output2:
-                                print("\nAttempt: " + str(attempt) + "/5  FAILED! Attempting again...")
-                                sent = False
-                            else:
-                                print("Re-sent file: " + line + " successfully!\nContinuing file transfers..\n")
-                                sent = True
-                                sent_list.append(line)
-                            if attempt == 5:
-                                print("Failed to send file"
-                                      + line + " , ""run app again later to send missing files!")
-                                break
-                        else:
-                            pass
-                    except (ConnectionError, KeyboardInterrupt) as e:
-                        if KeyboardInterrupt:
-                            print("User interrupted transfer!")
-                            break
-                        else:
-                            print("ERROR ERROR: " + str(e))
-                            break
-                sent_list.append(line)
+                    print("Trying to resend file, retrying...")
+                    # removed retry to its own function
+                    retry = retry_send(command)
+                    if retry == 0:
+                        sent_list.append(line)
+                    else:
+                        continue
             except (BrokenPipeError, KeyboardInterrupt) as e:
                 if KeyboardInterrupt:
                     print("User interrupted transfer!")
@@ -170,9 +146,36 @@ def send(missing_list, local_path, remote_path):
                     print('Nothing was sent!')
 
 
-def finalCheck():
-    """ do a final check, to determine that all files
-        are sent and both locations dirs are mirrors of each others """
+def retry_send(command):
+    """ retry sending a file incase initial send was not succefull """
+    error_string = "USER_SOCK_CONNECT_TIMEDOUT"
+    line = command
+    try:
+        # try to resend file 5 times MAX!
+        sent = False
+        attempt = 0
+        while not sent:
+            attempt += 1
+            output = subprocess.getoutput([command])
+            if error_string in output:
+                print("\nAttempt: " + str(attempt) + "/5  FAILED! Attempting again...")
+                sent = False
+            else:
+                print("Re-sent file: " + line + " successfully!\nContinuing file transfers..\n")
+                sent = True
+            if attempt == 5:
+                print("Failed to send file"
+                      + line + " , ""run app again later to send missing files!")
+                return 1
+        else:
+            return 0
+    except (ConnectionError, KeyboardInterrupt) as e:
+        if KeyboardInterrupt:
+            print("User interrupted transfer!")
+            sys.exit()
+        else:
+            print("ERROR ERROR: " + str(e))
+            sys.exit()
 
 
 def main():
