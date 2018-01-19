@@ -78,10 +78,12 @@ def comparison(local, remote, local_path, remote_path):
                 if int(remote_item_size) != local_item_size:
                     missing_list.append(l_item)
                     mismatch_list.append(l_item)
-        except (IndexError, KeyboardInterrupt) as e:
+        except (FileNotFoundError, IndexError, KeyboardInterrupt) as e:
             if KeyboardInterrupt:
                 print("\nUser aborted file check!")
                 sys.exit()
+            if FileNotFoundError:
+                print("File: " + l_item + " not found! Check local drive for errors!")
             else:
                 print("Error, connection most probably failed during the check!")
                 print(str(e))
