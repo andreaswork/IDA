@@ -41,14 +41,16 @@ def readall(local, remote):
         for line in line:
             line = line.strip()
             remote_list.append(line)
-        # remove first line from IDA dir, which just shows the dir path
+        # there is an empty row and folder name mixed in the list,
+        # so after sorting, removing 2 first lines removes them.
         remote_list.sort()
         remote_list.pop(0)
         remote_list.pop(0)
         handle.close()
     except (ConnectionError, IndexError) as e:
         if str(e) == "pop from empty list":
-            print("Error, could not read remote disk for files,\ncheck remote directory path or check internet connection!")
+            print("Error, could not read remote disk for files,"
+                  "\ncheck remote directory path or check internet connection!")
             sys.exit()
         else:
             print("Error: " + str(e))
@@ -154,7 +156,7 @@ def send(missing_list, local_path, remote_path):
 
 def retry_send(command):
     """ retry sending a file incase initial send was not succefull """
-    error_string = "USER_SOCK_CONNECT_TIMEDOUT"
+    error_string = "ERROR"
     line = command
     try:
         # try to resend file 5 times MAX!
@@ -192,11 +194,10 @@ def main():
     local_path = input("Give local path to data: (ie. /home/user/data)\n")
     remote_path = input("Give remote path to data: (ie. /ida/oy/sgo/data/...\n")
 
-    print("This is an app for easy transfer of data to IDA\n"
-          "Made by Andreas\n")
-    print("\nPrefix: This programs does not create the inital connection to IDA!\n"
-          "        Manually set connection to IDA with the 'iinit' command\n"
-          "        (IDA (irods) connection requires username and password to IDA services.\n")
+    print("This is an app for easy transfer of data to IRODS env.\n")
+    print("\nPrefix: This programs does not create the inital connection to IRODS!\n"
+          "        Manually set connection to IRODS with the 'iinit' command\n"
+          "        (IRODS connection requires username and password to IRODS services.\n")
 
     if local_path:
         local_dir, remote_dir = readall(local_path, remote_path)
